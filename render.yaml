@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: dune-webapp
+    env: python
+    plan: free
+    buildCommand: |
+      python -m pip install --upgrade pip setuptools wheel
+      # Strongly prefer binary wheels during install
+      PIP_PREFER_BINARY=1 pip install --prefer-binary -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
