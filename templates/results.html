@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+  {% if df is not none %}
+    <div class="card">
+      <p><strong>Success:</strong> Retrieved {{ total }} rows.</p>
+      <div style="overflow:auto; max-height:60vh;">
+        {{ df.to_html(index=False) | safe }}
+      </div>
+
+      <form method="POST" action="{{ url_for('download') }}" style="margin-top:12px;">
+        <input type="hidden" name="api_key" value="{{ api_key }}">
+        <input type="hidden" name="query_id" value="{{ query_id }}">
+        <button class="btn btn-primary" type="submit">📥 Download Results as CSV</button>
+      </form>
+      <p style="margin-top:8px;color:#666;">CSV filename includes UTC timestamp.</p>
+    </div>
+  {% else %}
+    <div class="card">
+      <p>The API response was not in the expected format.</p>
+      <pre style="white-space:pre-wrap;">{{ raw_json | tojson(indent=2) }}</pre>
+    </div>
+  {% endif %}
+
+  <a class="btn" href="{{ url_for('index') }}">⬅ Back</a>
+{% endblock %}

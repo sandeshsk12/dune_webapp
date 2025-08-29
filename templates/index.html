@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+  <form class="card" method="POST" action="{{ url_for('fetch') }}">
+    <label>Enter your Dune API Key</label>
+    <input type="password" name="api_key" placeholder="Enter your key..." value="{{ default_api_key }}"/>
+
+    <label>Enter the Dune Query ID</label>
+    <input type="number" name="query_id" min="1" step="1" required />
+
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary btn-block" type="submit">🚀 Get Query Results</button>
+    </div>
+  </form>
+{% endblock %}
