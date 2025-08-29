@@ -5,9 +5,6 @@ services:
     plan: free
     buildCommand: |
       python -m pip install --upgrade pip setuptools wheel
-      # Strongly prefer binary wheels during install
-      PIP_PREFER_BINARY=1 pip install --prefer-binary -r requirements.txt
+      # Strongly prefer wheels to avoid source builds
+      PIP_ONLY_BINARY=:all: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
