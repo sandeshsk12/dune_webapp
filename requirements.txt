@@ -1,4 +1,9 @@
+# requirements.txt
 Flask==3.0.3
-pandas==2.2.2
+gunicorn==22.0.0
 requests==2.32.3
 python-dotenv==1.0.1
+
+# Pin numpy before pandas to ensure a wheel gets installed first
+numpy==2.0.2           # has wheels on Linux x86_64
+pandas==2.2.2          # works with numpy 2.0.x
