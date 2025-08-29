@@ -79,9 +79,9 @@ def fetch():
         flash("API response not in expected format. See raw JSON below.", "danger")
         # Optionally show raw JSON for debugging
         return render_template("results.html", df=None, raw_json=data, query_id=query_id)
-
+    column_names=data["result"]["metadata"]["column_names"]
     rows = data["result"]["rows"]
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame(rows,columns=column_names)
     total = len(df)
 
     # Suggest a default file name
