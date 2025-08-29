@@ -11,9 +11,21 @@
       <form method="POST" action="{{ url_for('download') }}" style="margin-top:12px;">
         <input type="hidden" name="api_key" value="{{ api_key }}">
         <input type="hidden" name="query_id" value="{{ query_id }}">
-        <button class="btn btn-primary" type="submit">📥 Download Results as CSV</button>
+
+        <label for="filename" style="display:block; margin:10px 0 6px;">File name</label>
+        <input id="filename" name="filename" type="text"
+               placeholder="my_results.csv"
+               value="{{ suggested_name }}"
+               style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+
+        <button class="btn btn-primary" type="submit" style="margin-top:10px;">
+          📥 Download Results as CSV
+        </button>
       </form>
-      <p style="margin-top:8px;color:#666;">CSV filename includes UTC timestamp.</p>
+
+      <p style="margin-top:8px;color:#666;">
+        Tip: if you leave the field empty, a default name with UTC timestamp will be used.
+      </p>
     </div>
   {% else %}
     <div class="card">

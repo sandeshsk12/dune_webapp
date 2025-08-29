@@ -1,6 +1,6 @@
 import io
 import os
-import csv
+import re
 import pandas as pd
 import requests
 from datetime import datetime, timezone
@@ -14,6 +14,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-me")
 # Optional: put your key in .env as DUNE_API_KEY=xxx and leave the input empty
 DEFAULT_DUNE_API_KEY = os.getenv("DUNE_API_KEY", "")
 
+
 def fetch_dune_data(api_key: str, query_id: int) -> dict:
     url = f"https://api.dune.com/api/v1/query/{query_id}/results"
     headers = {"X-DUNE-API-KEY": api_key}
@@ -21,13 +22,30 @@ def fetch_dune_data(api_key: str, query_id: int) -> dict:
     resp.raise_for_status()
     return resp.json()
 
+
 def to_csv_bytes(df: pd.DataFrame) -> bytes:
     return df.to_csv(index=False).encode("utf-8")
+
+
+def safe_csv_name(name: str, fallback: str) -> str:
+    """
+    Sanitize a user-supplied filename and ensure it ends with .csv.
+    Keeps letters, numbers, dot, underscore, dash. Trims to 100 chars.
+    """
+    name = (name or "").strip()
+    cleaned = re.sub(r'[^A-Za-z0-9._-]+', '_', name)[:100]
+    if cleaned in {"", ".", ".."}:
+        cleaned = fallback
+    if not cleaned.lower().endswith(".csv"):
+        cleaned += ".csv"
+    return cleaned
+
 
 @app.route("/", methods=["GET"])
 def index():
     # page with a form
     return render_template("index.html", default_api_key=DEFAULT_DUNE_API_KEY)
+
 
 @app.route("/fetch", methods=["POST"])
 def fetch():
@@ -64,19 +82,33 @@ def fetch():
 
     rows = data["result"]["rows"]
     df = pd.DataFrame(rows)
-
-    # Store CSV as bytes in memory and pass via a tokenless postback (simple approach):
-    # We’ll keep the CSV in the session-less request by regenerating from df when downloading.
-    # To do that, we’ll stash the table in a hidden form on the results page as JSON (compact),
-    # or just rebuild CSV on the fly by POST’ing back data. Simpler: provide a download endpoint
-    # that refetches with same params (idempotent read). That’s what we’ll do.
     total = len(df)
-    return render_template("results.html", df=df, total=total, query_id=query_id, api_key=api_key)
+
+    # Suggest a default file name
+    utc_ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    suggested_name = f"dune_query_{query_id}_{utc_ts}.csv"
+
+    return render_template(
+        "results.html",
+        df=df,
+        total=total,
+        query_id=query_id,
+        api_key=api_key,
+        suggested_name=suggested_name,  # used by the template's filename input
+    )
+
 
 @app.route("/download", methods=["POST"])
 def download():
     api_key = request.form.get("api_key", "").strip()
-    query_id = int(request.form.get("query_id", "0"))
+    query_id_str = request.form.get("query_id", "0")
+    user_name = request.form.get("filename", "")
+
+    try:
+        query_id = int(query_id_str)
+    except ValueError:
+        query_id = 0
+
     if not api_key or not query_id:
         flash("Missing API key or Query ID for download.", "warning")
         return redirect(url_for("index"))
@@ -91,16 +123,20 @@ def download():
         return redirect(url_for("index"))
 
     csv_bytes = to_csv_bytes(df)
+
+    # Build a safe final filename
     utc_ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    filename = f"dune_query_{query_id}_{utc_ts}.csv"
+    default_name = f"dune_query_{query_id}_{utc_ts}.csv"
+    final_name = safe_csv_name(user_name, default_name)
+
     return send_file(
         io.BytesIO(csv_bytes),
         mimetype="text/csv",
         as_attachment=True,
-        download_name=filename
+        download_name=final_name,
     )
 
-if __name__ == "__main__":
-    import os
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
 
+if __name__ == "__main__":
+    # Local run; on Render use Gunicorn: `gunicorn app:app --bind 0.0.0.0:$PORT`
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
