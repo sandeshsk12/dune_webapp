@@ -21,6 +21,19 @@
       width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;
     }
     label{display:block; margin:10px 0 6px;}
+    .watermark {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-top: 40px;
+    }
+    .watermark a {
+      color: #333;
+      text-decoration: none;
+    }
+    .watermark a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -34,7 +47,11 @@
       {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
+  </div>
 
+  <div class="watermark">
+    Created by <strong>0xsandeshk</strong>. Contact me at 
+    <a href="https://x.com/0xsandeshk" target="_blank">x.com/0xsandeshk</a>
   </div>
 </body>
 </html>
