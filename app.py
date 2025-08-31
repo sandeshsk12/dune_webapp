@@ -116,8 +116,9 @@ def download():
     # Refetch to produce CSV (stateless + simple)
     try:
         data = fetch_dune_data(api_key, query_id)
+        column_names=data["result"]["metadata"]["column_names"]
         rows = data.get("result", {}).get("rows", [])
-        df = pd.DataFrame(rows)
+        df = pd.DataFrame(rows,columns=column_names)
     except Exception as e:
         flash(f"Download failed: {e}", "danger")
         return redirect(url_for("index"))
